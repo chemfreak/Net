@@ -3,6 +3,11 @@ import random
 import numpy as np
 from matplotlib import pyplot as plt
 
+from utils.data_functions import split_data
+from .losses import *
+
+from .layers import SoftMaxLayer
+
 
 class Net:
     """
@@ -22,12 +27,12 @@ class Net:
         """
 
         losses = {
-            "cross_entropy": (cross_entropy, derivative_cross_entropy),
-            "mse": (mse, derivative_mse)
+            "cross_entropy": (cross_entropy, cross_entropy_prime),
+            "mse": (mse, mse_prime)
         }
 
         # set loss function and its derivative
-        self.loss_function, self.derivative_loss_function = losses.get(loss)
+        self.loss_function, self.loss_function_prime = losses.get(loss)
 
         # set layers
         self.layers = layers
@@ -37,9 +42,8 @@ class Net:
         forward propagate all layers
         :return: output
         """
-
         # flatten 2D input to 1D
-        output = image.flatten()
+        output = image.reshape(1, -1)
 
         # propagate through all layers
         for layer in self.layers:
@@ -47,19 +51,32 @@ class Net:
 
         return output
 
-    def backward(self, dL_dy, **kwargs):
+    def backward(self, grad, **kwargs):
         """
-        backwards propagate and update parameters for all layers
-        :param dL_dy: gradient of Loss function with respect to the output
-        of the network
+        train the network with one set of image and label
+        :param alpha: learning rate
+        :return: loss for given training sample
         """
+        '''
+        # feed forward to get output and loss
+
+        output = self.forward(image)
+        print("train", output.shape)
+
+        # compute loss
+        loss = self.loss_function(output, label)
+        print("loss", loss)
+
+        # compute gradient of loss function
+        grad = self.loss_function_prime(output, label)
+
+        print(grad)
 
         # gradient of Loss function with respect to weights, can be computed
         # by using the chain rule
 
         # first term of this gradient is the gradient of Loss with respect to
         # the output of the last layer.
-        grad = dL_dy
 
         # we than propagate backwards over all layers, beginning with last
 
@@ -68,76 +85,68 @@ class Net:
         # returned
         # this gradient feeds into the backward method of the next layer
         # and so on
-
+'''
         for layer in self.layers[::-1]:
             grad = layer.backward(grad, **kwargs)
 
-    def train(self, image, label, alpha=0.001):
-        """
-        train the network with one set of image and label
-        :param alpha: learning rate
-        :return: loss for given training sample
-        """
+        return
 
-        # feed forward to get output and loss
+    def train(self, x, y, alpha):
+        output = self.forward(x)
 
-        output = self.forward(image)
+        # compute loss (for display purpose only)
+        # err += self.backward(x,y, alpha=alpha)
+        loss = self.loss_function(output, y)
 
-        # compute loss
-        loss = self.loss_function(output, label)
-
-        # compute gradient of loss function
-        grad = self.derivative_loss_function(output, label)
-
-        # backwards propagate net and update weights and biases
+        # backward propagation
+        grad = self.loss_function_prime(output, y)
         self.backward(grad, alpha=alpha)
+        # train the network
 
         return loss
 
-    def fit(self, data, epochs=20):
-        """
-        trains model with data
-        :param epochs number of epochs = how many times the network gets
-        trained with the whole data
+    def fit(self, train_data, eval_data=None, epochs=400, alpha=0.1):
+        splits = 10
+        len_split = int(epochs / splits)
 
-        :return: train_losses, eval_losses
-        """
+        t = np.linspace(0, epochs, splits + 1)
+        t = t.astype(int)
 
-        # number of epochs
-
-        # initialize arrays for losses
         train_losses = np.zeros(epochs)
         eval_losses = np.zeros(epochs)
+        for i, nums in enumerate(t[:-1]):
+            # training loop
+            for j in range(len_split):
 
-        # split data into training and validation data
-        train_data, eval_data = split_data(data)
+                random.shuffle(train_data)
 
-        print("Fitting model to data.")
-        print("Number of epochs:", epochs)
+                for x, y in train_data:
+                    # forward propagation
 
-        # train net for each epoch
-        for j in range(epochs):
-            print("epoch:", j + 1)
+                    train_losses[nums + j] += self.train(x, y,
+                                                                    alpha) / \
+                                                 len(
+                        train_data)
 
-            # shuffle data for each new epoch
-            random.shuffle(train_data)
+                # validate
+                if not eval_data is None:
 
-            # train and store losses
-            for label, image in train_data:
-                train_losses[j] += self.train(image, label) / len(
-                    train_data) / epochs
+                    random.shuffle(eval_data)
+                    for x, y in eval_data:
+                        # compute and store losses
+                        output = self.forward(x)
+                        eval_losses[nums + j] += \
+                            self.loss_function(
+                            output,
+                                                                    y) / len(
+                            eval_data)
 
-            # validate
-            for label, image in eval_data:
-                # compute and store losses
-                output = self.forward(image)
-                eval_losses[j] += self.loss_function(output, label) / len(
-                    eval_data) / epochs
-
+            print('epoch %d/%d done.  error=%f' % (
+                nums+len_split, epochs, eval_losses[nums]))
             # plot losses after each epoch to keep track of progression
-            plt.plot(range(len(train_losses)), train_losses,
+            plt.plot(range(epochs), train_losses,
                      label="train_losses")
-            plt.plot(range(len(eval_losses)), eval_losses,
+            plt.plot(range(epochs), eval_losses,
                      label="eval_losses")
 
             plt.legend()
@@ -147,20 +156,24 @@ class Net:
 
         return train_losses, eval_losses
 
-    def predict(self, image):
-        """
-        predict label for given image
-        :return: predicted label, output
-        """
+    # predict output for given input
+    def predict(self, input_data):
+        # sample dimension first
+        samples = len(input_data)
+        result = []
 
-        out = self.forward(image)
+        # run network over all samples
+        for i in range(samples):
+            # forward propagation
+            output = input_data[i]
+            for layer in self.layers:
+                output = layer.forward(output)
+            result.append(output)
 
-        # the predicted label is the highest value of the output array
-        pred = np.argmax(out)
-
-        return pred, out
+        return result
 
 
+'''
 class Layer:
     """
     Base class for Layers.
@@ -319,83 +332,5 @@ class LastLayer(Layer):
                 return dL_dz_prev
 
 
-def split_data(data, eval_fraction=0.1):
-    """
-    split data into training and validation set
-    :param eval_fraction: fraction of the data to be used for evaluation
-    :return: train_data, eval_data
-    """
 
-    # shuffle data
-    random.shuffle(data)
-
-    # len of evaluation data
-    len_eval = int(len(data) * eval_fraction)
-
-    train_data = data[:-len_eval]
-    eval_data = data[-len_eval:]
-
-    return train_data, eval_data
-
-
-def sigmoid(a):
-    """
-    sigmoid activation function
-    :return: 1 / (1 + np.exp(-a))
-    """
-    return 1 / (1 + np.exp(-a))
-
-
-def derivative_sigmoid(a):
-    """
-    derivative of sigmoid function
-    :return: sigmoid(a) * (1 - sigmoid(a))
-    """
-    return sigmoid(a) * (1 - sigmoid(a))
-
-
-def softmax(a):
-    """
-    softmax activation function
-    :return: np.exp(a) / np.sum(np.exp(a), axis=0)
-    """
-    return np.exp(a) / np.sum(np.exp(a))
-
-
-def cross_entropy(output, label):
-    """
-    cross entropy loss
-    :return: -np.log(output[label])
-    """
-    return -np.log(output[label])
-
-
-def derivative_cross_entropy(output, label):
-    """
-    derivative of cross entropy loss
-    :return: gradient[label] = -1 / output[label]
-    """
-    y = np.zeros(10)
-    y[label] = -1 / output[label]
-
-    return y
-
-
-def mse(output, label):
-    """
-    mean square error
-    :return: np.sum((y - output) ** 2)
-    """
-    y = np.zeros(10)
-    y[label] = 1
-    return np.sum((y - output) ** 2)
-
-
-def derivative_mse(output, label):
-    """
-    derivative of mse
-    :return: -(y - output)
-    """
-    y = np.zeros(10)
-    y[label] = 1
-    return -(y - output)
+'''

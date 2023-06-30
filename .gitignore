@@ -14,6 +14,20 @@
 /rename.py
 /test.py
 /trash.png
+/small_data.zip
 
-/by_class/
+/data/
+/small_data/
 /venv/
+
+/conv_layer.py
+/data.zip
+
+/example_conv.py
+/example_mnist_conv.py
+/example_mnist_fc.py
+/example_xor.py
+/example_xor_new.py
+/flatten_layer.py
+/layer.py
+/network.py
