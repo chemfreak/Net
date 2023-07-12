@@ -21,7 +21,7 @@ class ConvLayer(Layer):
         self.bias = np.random.rand(layer_depth) - 0.5
 
     # returns output for a given input
-    def forward_propagation(self, input):
+    def forward(self, input):
         self.input = input
         self.output = np.zeros(self.output_shape)
 
@@ -32,7 +32,7 @@ class ConvLayer(Layer):
         return self.output
 
     # computes dE/dW, dE/dB for a given output_error=dE/dY. Returns input_error=dE/dX.
-    def backward_propagation(self, output_error, learning_rate):
+    def backward(self, output_error, learning_rate):
         in_error = np.zeros(self.input_shape)
         dWeights = np.zeros((self.kernel_shape[0], self.kernel_shape[1], self.input_depth, self.layer_depth))
         dBias = np.zeros(self.layer_depth)

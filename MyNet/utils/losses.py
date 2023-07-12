@@ -16,7 +16,7 @@ def cross_entropy(y_pred, y_true):
     :return: -np.log(output[label])
     """
     max_p = np.argmax(y_true)
-    return -np.log(y_pred[max_p])
+    return -np.log(y_pred[:,max_p])
 
 
 def cross_entropy_prime(y_pred, y_true):

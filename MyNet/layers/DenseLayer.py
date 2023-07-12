@@ -8,14 +8,17 @@ class DenseLayer(BaseLayer):
     # output_size = number of output neurons
     def __init__(self, input_size, output_size):
         super().__init__()
-        self.weights = np.random.rand(input_size, output_size)
-        self.bias = np.random.rand(1,output_size)
+
+        self.weights = np.random.rand(input_size,
+                                      output_size) / input_size
+        # print(self.weights)
+        self.bias = np.random.rand(1, output_size)
 
     # returns output for a given input
     def forward(self, input):
-
         self.input = input
         self.output = np.dot(self.input, self.weights) + self.bias
+        # print(self.output)
         return self.output
 
     def backward(self, dL_dout, alpha):

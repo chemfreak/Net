@@ -3,14 +3,15 @@
 import argparse
 import itertools
 import os
+import random
 import sys
 
-from Net import *
+from MyNet import *
 
 from matplotlib import pyplot as plt
 
 # # # Global Variables # # #
-
+from MyNet.layers import DenseLayer
 
 description = "Digit recognition"
 
@@ -95,7 +96,7 @@ if __name__ == "__main__":
 
 
     # get data from folder
-    data_folder = "./by_class/by_class"
+    data_folder = "./data"
     print("Extracting data from folders:")
 
     data = [extract_data(filename, filename + "/train_3" + filename[1]) for
@@ -107,7 +108,8 @@ if __name__ == "__main__":
     data = list(itertools.chain.from_iterable(data))
 
     # initialize network
-    net = Net([LastLayer(16384, 10)])
+    net = Net([DenseLayer(16384, 10),DenseLayer(10, 10),DenseLayer(
+        10, 10)],loss="mse")
 
     # fit training data
     train_losses, eval_losses = net.fit(data)

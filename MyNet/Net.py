@@ -3,10 +3,8 @@ import random
 import numpy as np
 from matplotlib import pyplot as plt
 
-from utils.data_functions import split_data
-from .losses import *
-
-from .layers import SoftMaxLayer
+from .utils.data_functions import split_data
+from .utils.losses import *
 
 
 class Net:
@@ -27,7 +25,8 @@ class Net:
         """
 
         losses = {
-            "cross_entropy": (cross_entropy, cross_entropy_prime),
+            "cross_entropy": (
+                cross_entropy, cross_entropy_with_softmax_prime),
             "mse": (mse, mse_prime)
         }
 
@@ -37,17 +36,24 @@ class Net:
         # set layers
         self.layers = layers
 
-    def forward(self, image):
+    def forward(self, input):
         """
         forward propagate all layers
         :return: output
         """
         # flatten 2D input to 1D
-        output = image.reshape(1, -1)
+
+        if len(input.shape) > 1:
+            output = input
+
+        else:
+            output = input.reshape(1, -1, 1)
+        #print(output.shape)
 
         # propagate through all layers
         for layer in self.layers:
             output = layer.forward(output)
+            #print(output.shape)
 
         return output
 
@@ -122,11 +128,10 @@ class Net:
 
                 for x, y in train_data:
                     # forward propagation
-
                     train_losses[nums + j] += self.train(x, y,
-                                                                    alpha) / \
-                                                 len(
-                        train_data)
+                                                         alpha) / \
+                                              len(
+                                                  train_data)
 
                 # validate
                 if not eval_data is None:
@@ -137,12 +142,12 @@ class Net:
                         output = self.forward(x)
                         eval_losses[nums + j] += \
                             self.loss_function(
-                            output,
-                                                                    y) / len(
-                            eval_data)
+                                output,
+                                y) / len(
+                                eval_data)
 
             print('epoch %d/%d done.  error=%f' % (
-                nums+len_split, epochs, eval_losses[nums]))
+                nums + len_split, epochs, eval_losses[nums]))
             # plot losses after each epoch to keep track of progression
             plt.plot(range(epochs), train_losses,
                      label="train_losses")
@@ -172,6 +177,21 @@ class Net:
 
         return result
 
+    def pred(self, image):
+        """
+        predict label for given image
+        :return: predicted label, output
+        """
+
+        out = self.forward(image)
+
+        # the predicted label is the highest value of the output array
+        pred = np.argmax(out)
+
+        return pred, out
+
+
+#todo: add accuracy
 
 '''
 class Layer:

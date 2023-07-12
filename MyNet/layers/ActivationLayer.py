@@ -1,14 +1,23 @@
 from .BaseLayer import BaseLayer
 
-from ..activations import softmax, softmax_dummy_prime
+from ..utils.activations import *
 
 
 # inherit from base class Layer
 class ActivationLayer(BaseLayer):
-    def __init__(self, activation, activation_prime):
+    def __init__(self, activation):
         super().__init__()
-        self.activation = activation
-        self.activation_prime = activation_prime
+
+        activations = {
+            "tanh": (
+                tanh, tanh_prime),
+            "sigmoid": (sigmoid, sigmoid_prime),
+            "softmax": (softmax, softmax_prime),
+            "relu": (relu, relu_prime),
+        }
+
+        # set loss function and its derivative
+        self.activation, self.activation_prime = activations.get(activation)
 
     # returns the activated input
     def forward(self, input):
@@ -24,8 +33,7 @@ class ActivationLayer(BaseLayer):
 
 class SoftMaxLayer(ActivationLayer):
     def __init__(self):
-        super(SoftMaxLayer, self).__init__(softmax, softmax_dummy_prime)
+        super(SoftMaxLayer, self).__init__("softmax")
 
     def backward(self, dL_dout, alpha):
-        print("dL_dout", dL_dout)
         return dL_dout

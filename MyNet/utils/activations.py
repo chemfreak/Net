@@ -41,9 +41,20 @@ def softmax_prime(a):
     """
     return a
 
+
 def softmax_dummy_prime(a):
     """
     softmax activation function
     :return: np.exp(a) / np.sum(np.exp(a), axis=0)
     """
     return a
+
+
+# TODO: add relu
+
+def relu(a):
+    return np.maximum(0, a)
+
+
+def relu_prime(a):
+    return (a > 0).astype(a.dtype)
